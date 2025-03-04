@@ -246,12 +246,8 @@ fun MediaDropSystem(
                                 targetY.toInt() - (targetSize / 2).toPx().toInt()
                             )
                         }
-                        .border(
-                            width = 2.dp,
-                            color = Color.Gray,
-                            shape = CircleShape
-                        )
-                        .background(Color(0x4DFFFFFF), CircleShape)
+
+                        .background(Color(0xFF54BFFF).copy(0.35f), CircleShape)
                 )
 
                 // Place any dropped circles at their target positions
@@ -335,7 +331,8 @@ fun DraggableCircleFixed(
                 }
             }
             .clip(CircleShape)
-            .background(color.copy(alpha = opacity))
+            .background(Color.White.copy(alpha = opacity))
+            .border(BorderStroke(1.dp,Color(0xFF1BA9FF)), CircleShape)
             .pointerInput(id) {
                 detectDragGestures(
                     onDragStart = {
@@ -366,7 +363,7 @@ fun DraggableCircleFixed(
     ) {
         Text(
             text = "$id",
-            color = Color.White,
+            color = Color(0xFF1BA9FF),
             fontWeight = FontWeight.Bold
         )
     }
