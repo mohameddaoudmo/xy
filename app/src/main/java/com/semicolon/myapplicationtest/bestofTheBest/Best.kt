@@ -1,4 +1,5 @@
-package com.semicolon.myapplicationtest.news
+package com.semicolon.myapplicationtest.bestofTheBest
+
 import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -11,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -30,10 +30,9 @@ import com.semicolon.myapplicationtest.R
 import kotlin.math.pow
 import kotlin.math.sqrt
 @Composable
-fun CoordinatedDragAndDrop(apiCoordinates: List<Pair<Int, Int>>) {
+fun DragAndDropCirclesWithFreePositioningmmm(apiCoordinates: List<Pair<Int, Int>> = emptyList()) {
     // Constants for sizing
     val circleSize = 50.dp
-    val targetSize = 54.dp
 
     // Define circle colors
     val circleColors = listOf(
@@ -46,11 +45,17 @@ fun CoordinatedDragAndDrop(apiCoordinates: List<Pair<Int, Int>>) {
     var imageWidth by remember { mutableStateOf(1f) }
     var imageHeight by remember { mutableStateOf(1f) }
 
-    // State for circle positions
-    val circlePositions = remember { List(3) { CirclePosition() } }
-
     // Track image container bounds
     var imageContainerBounds by remember { mutableStateOf(androidx.compose.ui.geometry.Rect.Zero) }
+
+    // State for each circle's position (relative to the image)
+    class CirclePositionData {
+        var isDropped by mutableStateOf(false)
+        var positionX by mutableStateOf(0f)
+        var positionY by mutableStateOf(0f)
+    }
+
+    val circlePositions = remember { List(3) { CirclePositionData() } }
 
     Column(
         modifier = Modifier
@@ -61,13 +66,13 @@ fun CoordinatedDragAndDrop(apiCoordinates: List<Pair<Int, Int>>) {
     ) {
         // Title text
         Text(
-            text = "Drag the circles to their matching positions",
+            text = "Drag the circles to any position on the image",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
 
-        // Source circles container with higher z-index
+        // Source circles container
         Box(
             modifier = Modifier
                 .zIndex(1f)
@@ -80,64 +85,32 @@ fun CoordinatedDragAndDrop(apiCoordinates: List<Pair<Int, Int>>) {
                 horizontalArrangement = Arrangement.spacedBy(30.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val density = LocalDensity.current
                 // Only show circles that haven't been dropped
                 for (i in 0 until 3) {
                     if (!circlePositions[i].isDropped) {
-                        DraggableCircleFixed(
+                        DraggableCircleaa(
                             id = i + 1,
                             color = circleColors[i],
                             size = circleSize,
-                            imageContainerBounds = imageContainerBounds,
                             onDrop = { x, y ->
-                                // Convert the drop coordinates to be relative to the image container
-                                val relativeX = x - imageContainerBounds.left
-                                val relativeY = y - imageContainerBounds.top
+                                Log.d("DragDrop", "Drop at x=$x, y=$y")
 
-                                Log.d("DragDrop", "Absolute drop at x=$x, y=$y")
-                                Log.d("DragDrop", "Relative drop at x=$relativeX, y=$relativeY")
+                                // Check if drop is within the image bounds
+                                if (x >= imageContainerBounds.left &&
+                                    x <= imageContainerBounds.right &&
+                                    y >= imageContainerBounds.top &&
+                                    y <= imageContainerBounds.bottom) {
 
-                                // Create target positions based on percentages
-                                val dropTargets = apiCoordinates.mapIndexed { index, (topPercent, leftPercent) ->
-                                    // Calculate target position in pixels (same coordinate system as the drop)
-                                    val targetX = (imageWidth * leftPercent) / 100
-                                    val targetY = (imageHeight * topPercent) / 100
+                                    // Calculate position relative to the image container
+                                    val relativeX = x - imageContainerBounds.left
+                                    val relativeY = y - imageContainerBounds.top
 
-                                    Log.d("DragDrop", "Target ${index+1} at x=$targetX, y=$targetY (from $leftPercent%, $topPercent%)")
+                                    Log.d("DragDrop", "Relative position: x=$relativeX, y=$relativeY")
 
-                                    Triple(index + 1, targetX, targetY)
-                                }
-
-                                // Check if dropped on a target
-                                for ((targetId, targetX, targetY) in dropTargets) {
-                                    // Calculate distance between relative drop point and target center
-                                    val distance = kotlin.math.sqrt(
-                                        (relativeX - targetX).pow(2) +
-                                                (relativeY - targetY).pow(2)
-                                    )
-
-                                    // Get target radius in pixels
-                                    val targetRadius = with(density) { (targetSize / 2).toPx() }
-
-                                    Log.d("DragDrop", "Distance to target $targetId: $distance, Target radius: $targetRadius")
-
-                                    // Check if drop is within target bounds with tolerance
-                                    if (distance < targetRadius * 2.5f) {
-                                        Log.d("DragDrop", "Drop detected on target $targetId")
-
-                                        // Remove any existing circle from this target
-                                        for (j in 0 until 3) {
-                                            if (circlePositions[j].targetId == targetId) {
-                                                circlePositions[j].isDropped = false
-                                                circlePositions[j].targetId = null
-                                            }
-                                        }
-
-                                        // Set this circle as dropped to this target
-                                        circlePositions[i].isDropped = true
-                                        circlePositions[i].targetId = targetId
-                                        break
-                                    }
+                                    // Store the position and mark as dropped
+                                    circlePositions[i].isDropped = true
+                                    circlePositions[i].positionX = relativeX
+                                    circlePositions[i].positionY = relativeY
                                 }
                             }
                         )
@@ -146,7 +119,7 @@ fun CoordinatedDragAndDrop(apiCoordinates: List<Pair<Int, Int>>) {
             }
         }
 
-        // Target image with drop positions
+        // Target image
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -169,58 +142,42 @@ fun CoordinatedDragAndDrop(apiCoordinates: List<Pair<Int, Int>>) {
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Draw target positions and dropped circles
-            apiCoordinates.forEachIndexed { index, (topPercent, leftPercent) ->
-                val targetId = index + 1
-
-                // Calculate position in pixels
-                val targetX = (imageWidth * leftPercent) / 100
-                val targetY = (imageHeight * topPercent) / 100
-
-                // Draw target circle
-                Box(
-                    modifier = Modifier
-                        .size(targetSize)
-                        .offset {
-                            IntOffset(
-                                targetX.toInt() - (targetSize / 2).toPx().toInt(),
-                                targetY.toInt() - (targetSize / 2).toPx().toInt()
+            // Draw dropped circles at their exact dropped positions
+            circlePositions.forEachIndexed { index, position ->
+                if (position.isDropped ) {
+                    Box(
+                        modifier = Modifier
+                            .size(circleSize)
+                            .offset {
+                                IntOffset(
+                                    position.positionX.toInt() - (circleSize / 2).toPx().toInt(),
+                                    position.positionY.toInt() - (circleSize / 2).toPx().toInt()
+                                )
+                            }
+                            .clip(CircleShape)
+                            .background(
+                                if (position.isDropped) circleColors[index]
+                                else circleColors[index].copy(alpha = 0.5f)
                             )
-                        }
-                        .border(
-                            width = 2.dp,
-                            color = Color.Gray,
-                            shape = CircleShape
-                        )
-                        .background(Color(0x4DFFFFFF), CircleShape)
-                )
-
-                // Place any dropped circles at their target positions
-                for (i in 0 until 3) {
-                    if (circlePositions[i].isDropped && circlePositions[i].targetId == targetId) {
-                        Box(
-                            modifier = Modifier
-                                .size(circleSize)
-                                .offset {
-                                    IntOffset(
-                                        targetX.toInt() - (circleSize / 2).toPx().toInt(),
-                                        targetY.toInt() - (circleSize / 2).toPx().toInt()
-                                    )
-                                }
-                                .clip(CircleShape)
-                                .background(circleColors[i]),
-                            contentAlignment = Alignment.Center
-                        ) {
+                            .border(
+                                width = 2.dp,
+                                color = if (position.isDropped) Color.Transparent
+                                else circleColors[index],
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (position.isDropped) {
                             Text(
-                                text = "${i + 1}",
+                                text = "${index + 1}",
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                        break
                     }
                 }
             }
+
         }
 
         // Reset button
@@ -229,7 +186,6 @@ fun CoordinatedDragAndDrop(apiCoordinates: List<Pair<Int, Int>>) {
                 // Reset all circles
                 for (i in 0 until 3) {
                     circlePositions[i].isDropped = false
-                    circlePositions[i].targetId = null
                 }
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A90E2)),
@@ -245,13 +201,11 @@ fun CoordinatedDragAndDrop(apiCoordinates: List<Pair<Int, Int>>) {
     }
 }
 
-// Modified draggable circle that uses consistent coordinate system
 @Composable
-fun DraggableCircleFixed(
+fun DraggableCircleaa(
     id: Int,
     color: Color,
     size: Dp,
-    imageContainerBounds: Rect,
     onDrop: (Float, Float) -> Unit
 ) {
     var isDragging by remember { mutableStateOf(false) }
@@ -290,7 +244,7 @@ fun DraggableCircleFixed(
                     onDragEnd = {
                         val dropX = originalPosition.x + dragOffset.x
                         val dropY = originalPosition.y + dragOffset.y
-                        Log.d("DragDrop", "Ending drag of circle $id at absolute position $dropX, $dropY")
+                        Log.d("DragDrop", "Ending drag of circle $id at position $dropX, $dropY")
                         onDrop(dropX, dropY)
                         isDragging = false
                         dragOffset = Offset.Zero
@@ -311,17 +265,4 @@ fun DraggableCircleFixed(
             fontWeight = FontWeight.Bold
         )
     }
-}
-
-// Circle position state class
-class CirclePosition {
-    var isDropped by mutableStateOf(false)
-    var targetId by mutableStateOf<Int?>(null)
-}
-
-// Extension function for power calculation
-private fun Float.pow(exponent: Int): Float {
-    var result = 1f
-    repeat(exponent) { result *= this }
-    return result
 }
