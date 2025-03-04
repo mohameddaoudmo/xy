@@ -95,12 +95,13 @@ class MainActivity : ComponentActivity() {
                             30 to 72,  // 30% from top, 72% from left
                             15 to 21   // 15% from top, 21% from left
                         )
+                        val videoUri = "android.resource://${packageName}/${R.raw.traffic}"
 
                         MediaDropSystem(    apiCoordinates = listOf(
                             Pair(60, 45),  // (topPercent, leftPercent) for target 1
                             Pair(30, 72),  // (topPercent, leftPercent) for target 2
                             Pair(15, 21)   // (topPercent, leftPercent) for target 3
-                        ),isVideo = true, videoUri ="https://gostcode.com/eltaher/public/uploads/package/HqxreI1735984817.mp4" )
+                        ),isVideo = true, videoUri =videoUri)
                 }}
             }
         }
