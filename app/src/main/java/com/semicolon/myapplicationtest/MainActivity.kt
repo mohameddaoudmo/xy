@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.semicolon.myapplicationtest.news.CoordinatedDragAndDrop
 import com.semicolon.myapplicationtest.ss.DragAndDropCirclesWithPrePositioning
+import com.semicolon.myapplicationtest.videoorImage.MediaDropSystem
 import com.semicolon.syaqa.componat.DragAndDropCirclesApps
 import com.semicolon.syaqa.componat.DragAndDropCirclesAppss
 import com.semicolon.syaqa.component.DragAndDropCirclesImproved
@@ -95,11 +96,11 @@ class MainActivity : ComponentActivity() {
                             15 to 21   // 15% from top, 21% from left
                         )
 
-                        CoordinatedDragAndDrop(    apiCoordinates = listOf(
+                        MediaDropSystem(    apiCoordinates = listOf(
                             Pair(60, 45),  // (topPercent, leftPercent) for target 1
                             Pair(30, 72),  // (topPercent, leftPercent) for target 2
                             Pair(15, 21)   // (topPercent, leftPercent) for target 3
-                        ))
+                        ),isVideo = true, videoUri ="https://gostcode.com/eltaher/public/uploads/package/HqxreI1735984817.mp4" )
                 }}
             }
         }
